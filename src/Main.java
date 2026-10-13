@@ -19,13 +19,16 @@ public class Main {
     public static void main(String[] args) {
         while (true) {
             System.out.println();
-            System.out.println("1 - начать игру ");
+            System.out.println("1 - начать игру");
             System.out.println("0 - выйти из игры");
-            int choosing = SCANNER.nextInt();
-            if (choosing == 1) {
+            String choosing = SCANNER.next();
+
+            if (choosing.equals("1")) {
                 startGame();
-            } else {
+            } else if (choosing.equals("0")) {
                 break;
+            } else {
+                System.out.println("Введите 1 или 0");
             }
         }
 
