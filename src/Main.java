@@ -15,6 +15,8 @@ public class Main {
 
     private static final String WORDS_FILE_PATH = "words.txt";
 
+    private static final String UNKNOWN_SYMBOL = "*";
+
 
     public static void main(String[] args) {
         while (true) {
@@ -23,18 +25,18 @@ public class Main {
             System.out.println("0 - выйти из игры");
             String choosing = SCANNER.next();
 
-            if (choosing.equals("1")) {
-                startGame();
-            } else if (choosing.equals("0")) {
-                break;
-            } else {
-                System.out.println("Введите 1 или 0");
+            switch (choosing) {
+                case "1" -> startGame();
+                case "0" -> {
+                    return;
+                }
+                default -> System.out.println("Введите 1 или 0");
             }
         }
 
     }
 
-    public static String readRandomFile(int randomNumber) {
+    public static String readRandomWord(int randomNumber) {
         try (BufferedReader reader = new BufferedReader(new FileReader(WORDS_FILE_PATH))) {
             String line = "";
             for (int i = 0; i < randomNumber; i++) {
@@ -48,31 +50,31 @@ public class Main {
     }
 
     public static void startGame() {
-        String guessWord = guessRandomWord();
-        char[] maskedWord = printUnknowSymbols(guessWord.length()).toCharArray();
-        List<Character> repeatChars = new ArrayList<>();
-        int mistakes = 0;
-        int hiddenLetters = guessWord.length();
+        String secretWord = guessRandomWord();
+        char[] maskedWord = getUnknownSymbol(secretWord.length()).toCharArray();
+        Set<Character> repeatChars = new HashSet<>();
+        int mistakesCount = 0;
+        int hiddenLetters = secretWord.length();
         boolean isWin = false;
 
         System.out.println(maskedWord);
-        while (mistakes < MAX_MISTAKES && !isWin) {
+        while (mistakesCount < MAX_MISTAKES && !isWin) {
             char letter = inputCharFromPlayer(repeatChars);
 
-            int opened = checkCharInWord(letter, guessWord, maskedWord);
+            int opened = getGuessedLettersCount(letter, secretWord, maskedWord);
             if (opened == 0) {
-                mistakes++;
+                mistakesCount++;
             }
             hiddenLetters -= opened;
             isWin = hiddenLetters == 0;
 
-            printGameState(mistakes, maskedWord, isWin, guessWord);
+            printGameState(mistakesCount, maskedWord, isWin, secretWord);
         }
     }
 
     public static String guessRandomWord() {
         int randomNumber = RANDOM.nextInt(MAX_COUNT_WORDS) + 1;
-        return readRandomFile(randomNumber);
+        return readRandomWord(randomNumber);
 
     }
 
@@ -138,16 +140,16 @@ public class Main {
         }
     }
 
-    public static String printUnknowSymbols(int length) {
+    public static String getUnknownSymbol(int length) {
         StringBuilder unknowSymbols = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            unknowSymbols.append("*");
+            unknowSymbols.append(UNKNOWN_SYMBOL);
         }
 
         return unknowSymbols.toString();
     }
 
-    public static int checkCharInWord(char letter, String guessWord, char[] maskedWord) {
+    public static int getGuessedLettersCount(char letter, String guessWord, char[] maskedWord) {
         int openned = 0;
         for (int i = 0; i < guessWord.length(); i++) {
             if (letter == guessWord.charAt(i)) {
@@ -158,29 +160,35 @@ public class Main {
         return openned;
     }
 
-    public static char inputCharFromPlayer(List<Character> repeatChars) {
+    public static char inputCharFromPlayer(Set<Character> repeatChars) {
         System.out.println("введите ОДНУ букву:");
         do {
             String playerInput = SCANNER.next().toLowerCase();
-
-            if (playerInput.length() > 1) {
-                System.out.println("Введите только одну букву");
+            if (isValidLetter(repeatChars, playerInput)) {
                 continue;
             }
-            if (!playerInput.matches("[а-яё]")) {
-                System.out.println("Это не русская буква");
-                continue;
-            }
-
             char letter = playerInput.charAt(0);
-            if (repeatChars.contains(letter)) {
-                System.out.println("Вы уже вводили эту букву");
-                continue;
-            }
-
             repeatChars.add(letter);
             return letter;
         } while (true);
+    }
+
+    private static boolean isValidLetter(Set<Character> repeatChars, String playerInput) {
+        if (playerInput.length() > 1) {
+            System.out.println("Введите только одну букву");
+            return false;
+        }
+        if (!playerInput.matches("[а-яё]")) {
+            System.out.println("Это не русская буква");
+            return false;
+        }
+
+        char letter = playerInput.charAt(0);
+        if (repeatChars.contains(letter)) {
+            System.out.println("Вы уже вводили эту букву");
+            return false;
+        }
+        return true;
     }
 
 }
